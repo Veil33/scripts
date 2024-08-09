@@ -89,7 +89,7 @@ ipv4=$(curl -s ipv4.ip.sb)
 if [ -n "$ipv4" ]; then
     HOST_IP="$ipv4"
 else
-    ipv6=$(curl -s ip.sb)
+    ipv6=$(curl ip.sb)
     if [ -n "$ipv6" ]; then
         HOST_IP="$ipv6"
     else
