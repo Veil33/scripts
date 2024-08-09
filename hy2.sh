@@ -1,4 +1,5 @@
 #!/bin/bash
+export HOST_IP=${HOST_IP:-$(HOST_IP)} 
 export PASSWORD=${PASSWORD:-$(openssl rand -base64 12)} 
 export SERVER_PORT="${SERVER_PORT:-${PORT:-8880}}"      
 export NEZHA_SERVER=${NEZHA_SERVER:-'nz.123.cn'}      
@@ -85,18 +86,6 @@ run() {
 run
 
 # get ip
-ipv4=$(curl -s ipv4.ip.sb)
-if [ -n "$ipv4" ]; then
-    HOST_IP="$ipv4"
-else
-    ipv6=$(curl ip.sb)
-    if [ -n "$ipv6" ]; then
-        HOST_IP="$ipv6"
-    else
-        echo -e "\e[1;35m无法获取IPv4或IPv6地址\033[0m"
-        exit 1
-    fi
-fi
 echo -e "\e[1;32m本机IP: $HOST_IP\033[0m"
 
 # get ipinfo
