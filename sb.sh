@@ -20,8 +20,8 @@ export NEZHA_KEY=${NEZHA_KEY:-''}
 export ARGO_DOMAIN=${ARGO_DOMAIN:-''}   
 export ARGO_AUTH=${ARGO_AUTH:-''}
 export VMESS_PORT=${VMESS_PORT:-'40000'}
-export TUIC_PORT=${TUIC_PORT:-'50000'}
-export HY2_PORT=${HY2_PORT:-'60000'}
+#export TUIC_PORT=${TUIC_PORT:-'50000'}
+#export HY2_PORT=${HY2_PORT:-'60000'}
 export CFIP=${CFIP:-'www.visa.com.tw'} 
 export CFPORT=${CFPORT:-'443'} 
 
@@ -101,26 +101,6 @@ generate_config() {
   },
     "inbounds": [
     {
-       "tag": "hysteria-in",
-       "type": "hysteria2",
-       "listen": "::",
-       "listen_port": $HY2_PORT,
-       "users": [
-         {
-             "password": "$UUID"
-         }
-     ],
-     "masquerade": "https://bing.com",
-     "tls": {
-         "enabled": true,
-         "alpn": [
-             "h3"
-         ],
-         "certificate_path": "cert.pem",
-         "key_path": "private.key"
-        }
-    },
-    {
       "tag": "vmess-ws-in",
       "type": "vmess",
       "listen": "::",
@@ -136,28 +116,6 @@ generate_config() {
       "early_data_header_name": "Sec-WebSocket-Protocol"
       }
     },
-    {
-      "tag": "tuic-in",
-      "type": "tuic",
-      "listen": "::",
-      "listen_port": $TUIC_PORT,
-      "users": [
-        {
-          "uuid": "$UUID",
-          "password": "admin123"
-        }
-      ],
-      "congestion_control": "bbr",
-      "tls": {
-        "enabled": true,
-        "alpn": [
-          "h3"
-        ],
-        "certificate_path": "cert.pem",
-        "key_path": "private.key"
-      }
-    }
-
  ],
     "outbounds": [
     {
@@ -364,9 +322,6 @@ vmess://$(echo "{ \"v\": \"2\", \"ps\": \"$ISP\", \"add\": \"$IP\", \"port\": \"
 
 vmess://$(echo "{ \"v\": \"2\", \"ps\": \"$ISP\", \"add\": \"$CFIP\", \"port\": \"$CFPORT\", \"id\": \"$UUID\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"$argodomain\", \"path\": \"/vmess?ed=2048\", \"tls\": \"tls\", \"sni\": \"$argodomain\", \"alpn\": \"\", \"fp\": \"\"}" | base64 -w0)
 
-hysteria2://$UUID@$IP:$HY2_PORT/?sni=www.bing.com&alpn=h3&insecure=1#$ISP
-
-tuic://$UUID:admin123@$IP:$TUIC_PORT?sni=www.bing.com&congestion_control=bbr&udp_relay_mode=native&alpn=h3&allow_insecure=1#$ISP
 EOF
 cat list.txt
 purple "\n$WORKDIR/list.txt saved successfully"
