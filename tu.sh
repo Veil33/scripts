@@ -1,43 +1,80 @@
 #!/bin/bash
-export UUID=${UUID:-'fc44fe6a-f083-4591-9c03-f8d61dc3907f'}   # 若需要固定UUID，删除改行开头的#，删除第二行
-#export UUID=UUID:-$(openssl rand -hex 16 | awk '{print substr($0,1,8)"-"substr($0,9,4)"-"substr($0,13,4)"-"substr($0,17,4)"-"substr($0,21,12)}')
-export PASSWORD=${PASSWORD:-$(openssl rand -base64 16)}  # 随机生成password，无需更改
-export PORT="${PORT:-${PORT:-1234}}"                   # TUIC 端口必填，改为开放的udp端口
-export NEZHA_SERVER=${NEZHA_SERVER:-''}                # 哪吒客户端域名
-export NEZHA_PORT=${NEZHA_PORT:-'5555'}             # 哪吒客户端端口为{443,8443,2096,2087,2083,2053}其中之一时开启tls
-export NEZHA_KEY=${NEZHA_KEY:-''}                 # 哪吒客户端密钥
+export LC_ALL=C
+export UUID=${UUID:-'39e8b439-06be-4783-ad52-6357fc5e8743'}         
+export NEZHA_SERVER=${NEZHA_SERVER:-''}             
+export NEZHA_PORT=${NEZHA_PORT:-'5555'}            
+export NEZHA_KEY=${NEZHA_KEY:-''}
+export PASSWORD=${PASSWORD:-'admin'} 
+export PORT=${PORT:-'0000'}  
 USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="domains/${USERNAME}.ct8.pl/logs" || WORKDIR="domains/${USERNAME}.serv00.net/logs"
 [ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR" && cd "$WORKDIR")
+ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 2>/dev/null
+
 
 # Download Dependency Files
+clear
 ARCH=$(uname -m) && DOWNLOAD_DIR="." && mkdir -p "$DOWNLOAD_DIR" && FILE_INFO=()
 if [ "$ARCH" == "arm" ] || [ "$ARCH" == "arm64" ] || [ "$ARCH" == "aarch64" ]; then
     FILE_INFO=("https://github.com/etjec4/tuic/releases/download/tuic-server-1.0.0/tuic-server-1.0.0-x86_64-unknown-freebsd.sha256sum web" "https://github.com/eooce/test/releases/download/ARM/swith npm")
 elif [ "$ARCH" == "amd64" ] || [ "$ARCH" == "x86_64" ] || [ "$ARCH" == "x86" ]; then
-    FILE_INFO=("https://github.com/etjec4/tuic/releases/download/tuic-server-1.0.0/tuic-server-1.0.0-x86_64-unknown-freebsd web" "https://github.com/eooce/test/releases/download/freebsd/swith npm")
+    FILE_INFO=("https://github.com/etjec4/tuic/releases/download/tuic-server-1.0.0/tuic-server-1.0.0-x86_64-unknown-freebsd web" "https://github.com/eooce/test/releases/download/freebsd/npm npm")
 else
     echo "Unsupported architecture: $ARCH"
     exit 1
 fi
+declare -A FILE_MAP
+generate_random_name() {
+    local chars=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
+    local name=""
+    for i in {1..6}; do
+        name="$name${chars:RANDOM%${#chars}:1}"
+    done
+    echo "$name"
+}
+download_with_fallback() {
+    local URL=$1
+    local NEW_FILENAME=$2
+
+    curl -L -sS --max-time 3 -o "$NEW_FILENAME" "$URL" &
+    CURL_PID=$!
+    CURL_START_SIZE=$(stat -c%s "$NEW_FILENAME" 2>/dev/null || echo 0)
+    
+    sleep 1
+
+    CURL_CURRENT_SIZE=$(stat -c%s "$NEW_FILENAME" 2>/dev/null || echo 0)
+    
+    if [ "$CURL_CURRENT_SIZE" -le "$CURL_START_SIZE" ]; then
+        kill $CURL_PID 2>/dev/null
+        wait $CURL_PID 2>/dev/null
+        wget -q -O "$NEW_FILENAME" "$URL"
+        echo -e "\e[1;32mDownloading $NEW_FILENAME by wget\e[0m"
+    else
+        wait $CURL_PID
+        echo -e "\e[1;32mDownloading $NEW_FILENAME by curl\e[0m"
+    fi
+}
+
 for entry in "${FILE_INFO[@]}"; do
     URL=$(echo "$entry" | cut -d ' ' -f 1)
-    NEW_FILENAME=$(echo "$entry" | cut -d ' ' -f 2)
-    FILENAME="$DOWNLOAD_DIR/$NEW_FILENAME"
-    if [ -e "$FILENAME" ]; then
-        echo -e "\e[1;32m$FILENAME already exists,Skipping download\e[0m"
+    RANDOM_NAME=$(generate_random_name)
+    NEW_FILENAME="$DOWNLOAD_DIR/$RANDOM_NAME"
+    
+    if [ -e "$NEW_FILENAME" ]; then
+        echo -e "\e[1;32m$NEW_FILENAME already exists, Skipping download\e[0m"
     else
-        curl -L -sS -o "$FILENAME" "$URL"
-        echo -e "\e[1;32mDownloading $FILENAME\e[0m"
+        download_with_fallback "$URL" "$NEW_FILENAME"
     fi
-    chmod +x $FILENAME
+    
+    chmod +x "$NEW_FILENAME"
+    FILE_MAP[$(echo "$entry" | cut -d ' ' -f 2)]="$NEW_FILENAME"
 done
 wait
 
 # Generate cert
-openssl req -x509 -nodes -newkey ec:<(openssl ecparam -name prime256v1) -keyout server.key -out server.crt -subj "/CN=bing.com" -days 36500
+openssl req -x509 -nodes -newkey ec:<(openssl ecparam -name prime256v1) -keyout $WORKDIR/server.key -out $WORKDIR/server.crt -subj "/CN=bing.com" -days 36500
 
 # Generate configuration file
 cat > config.json <<EOL
@@ -46,8 +83,8 @@ cat > config.json <<EOL
   "users": {
     "$UUID": "$PASSWORD"
   },
-  "certificate": "server.crt",
-  "private_key": "server.key",
+  "certificate": "$WORKDIR/server.crt",
+  "private_key": "$WORKDIR/server.key",
   "congestion_control": "bbr",
   "alpn": ["h3", "spdy/3.1"],
   "udp_relay_ipv6": true,
@@ -65,7 +102,7 @@ EOL
 
 # running files
 run() {
-  if [ -e npm ]; then
+  if [ -e "$(basename ${FILE_MAP[npm]})" ]; then
     tlsPorts=("443" "8443" "2096" "2087" "2083" "2053")
     if [[ "${tlsPorts[*]}" =~ "${NEZHA_PORT}" ]]; then
       NEZHA_TLS="--tls"
@@ -73,40 +110,42 @@ run() {
       NEZHA_TLS=""
     fi
     if [ -n "$NEZHA_SERVER" ] && [ -n "$NEZHA_PORT" ] && [ -n "$NEZHA_KEY" ]; then
-      nohup ./npm -s ${NEZHA_SERVER}:${NEZHA_PORT} -p ${NEZHA_KEY} ${NEZHA_TLS} >/dev/null 2>&1 &
-	    sleep 1
-      echo -e "\e[1;32mnpm is running\e[0m"
+      export TMPDIR=$(pwd)
+      nohup ./"$(basename ${FILE_MAP[npm]})" -s ${NEZHA_SERVER}:${NEZHA_PORT} -p ${NEZHA_KEY} ${NEZHA_TLS} >/dev/null 2>&1 &
+      sleep 1
+      pgrep -x "$(basename ${FILE_MAP[npm]})" > /dev/null && echo -e "\e[1;32m$(basename ${FILE_MAP[npm]}) is running\e[0m" || { echo -e "\e[1;35m$(basename ${FILE_MAP[npm]}) is not running, restarting...\e[0m"; pkill -f "$(basename ${FILE_MAP[npm]})" && nohup ./"$(basename ${FILE_MAP[npm]})" -s ${NEZHA_SERVER}:${NEZHA_PORT} -p ${NEZHA_KEY} ${NEZHA_TLS} >/dev/null 2>&1 & sleep 2; echo -e "\e[1;32m"$(basename ${FILE_MAP[npm]})" restarted\e[0m"; }
     else
-        echo -e "\e[1;35mNEZHA variable is empty,skiping runing\e[0m"
+      echo -e "\e[1;35mNEZHA variable is empty, skipping running\e[0m"
     fi
   fi
 
-  if [ -e web ]; then
-    nohup ./web -c config.json >/dev/null 2>&1 &
+  if [ -e "$(basename ${FILE_MAP[web]})" ]; then
+    nohup ./"$(basename ${FILE_MAP[web]})" -c config.json >/dev/null 2>&1 &
     sleep 1
-    echo -e "\e[1;32mweb is running\e[0m"
+    pgrep -x "$(basename ${FILE_MAP[web]})" > /dev/null && echo -e "\e[1;32m$(basename ${FILE_MAP[web]}) is running\e[0m" || { echo -e "\e[1;35m$(basename ${FILE_MAP[web]}) is not running, restarting...\e[0m"; pkill -f "$(basename ${FILE_MAP[web]})" && nohup ./"$(basename ${FILE_MAP[web]})" -c config.json >/dev/null 2>&1 & sleep 2; echo -e "\e[1;32m$(basename ${FILE_MAP[web]}) restarted\e[0m"; }
   fi
-
+rm -rf "$(basename ${FILE_MAP[web]})" "$(basename ${FILE_MAP[npm]})"
 }
 run
 
-# get ip
-ipv4=$(curl -s ipv4.ip.sb)
-if [ -n "$ipv4" ]; then
-    HOST_IP="$ipv4"
-else
-    ipv6=$(curl -s --max-time 1 ipv6.ip.sb)
-    if [ -n "$ipv6" ]; then
-        HOST_IP="$ipv6"
+get_ip() {
+  ip=$(curl -s --max-time 2 ipv4.ip.sb)
+  if [ -z "$ip" ]; then
+    ip=$( [[ "$HOSTNAME" =~ s[0-9]\.serv00\.com ]] && echo "${HOSTNAME/s/web}" || echo "$HOSTNAME" )
+  else
+    url="https://www.toolsdaquan.com/toolapi/public/ipchecking/$ip/443"
+    response=$(curl -s --location --max-time 3.5 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
+    if [ -z "$response" ] || ! echo "$response" | grep -q '"icmp":"success"'; then
+        accessible=false
     else
-        echo -e "\e[1;35m无法获取IPv4或IPv6地址\033[0m"
-        exit 1
+        accessible=true
     fi
-fi
-echo -e "\e[1;32m本机IP: $HOST_IP\033[0m"
-
-# get ipinfo
-ISP=$(curl -s https://speed.cloudflare.com/meta | awk -F\" '{print $26"-"$18}' | sed -e 's/ /_/g')
+    if [ "$accessible" = false ]; then
+        ip=$( [[ "$HOSTNAME" =~ s[0-9]\.serv00\.com ]] && echo "${HOSTNAME/s/web}" || echo "$ip" )
+    fi
+  fi
+  echo "$ip"
+}
 
 # get hy2 node
 echo -e "\e[1;32mTuic安装成功\033[0m"
@@ -116,6 +155,6 @@ echo -e "\e[1;32mtuic://$UUID:$PASSWORD@$HOST_IP:$PORT?congestion_control=bbr&al
 echo ""
 
 # delete files
-rm -rf npm web config.json
+rm -rf config.json fake_useragent_0.2.0.json
 
 exit 0
