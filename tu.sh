@@ -13,7 +13,6 @@ HOSTNAME=$(hostname)
 [ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR" && cd "$WORKDIR")
 ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 2>/dev/null
 
-
 # Download Dependency Files
 clear
 ARCH=$(uname -m) && DOWNLOAD_DIR="." && mkdir -p "$DOWNLOAD_DIR" && FILE_INFO=()
@@ -34,6 +33,7 @@ generate_random_name() {
     done
     echo "$name"
 }
+
 download_with_fallback() {
     local URL=$1
     local NEW_FILENAME=$2
@@ -147,14 +147,28 @@ get_ip() {
   echo "$ip"
 }
 
-# get hy2 node
-echo -e "\e[1;32mTuic安装成功\033[0m"
-echo ""
-echo -e "\e[1;33mV2rayN 或 Nekobox，跳过证书验证需设置为true\033[0m\n"
-echo -e "\e[1;32mtuic://$UUID:$PASSWORD@$HOST_IP:$PORT?congestion_control=bbr&alpn=h3&sni=www.bing.com&udp_relay_mode=native&allow_insecure=1#$ISP\e[0m"
-echo ""
+HOST_IP=$(get_ip)
 
-# delete files
+ISP=$(curl -s https://speed.cloudflare.com/meta | awk -F\" '{print $26"-"$18}' | sed -e 's/ /_/g')
+
+echo -e "\e[1;32mtuic://$UUID:$PASSWORD@$HOST_IP:$PORT?congestion_control=bbr&alpn=h3&sni=www.bing.com&udp_relay_mode=native&allow_insecure=1#$ISP\e[0m\n"
+echo -e "\e[1;33mClash\033[0m"
+cat << EOF
+- name: $ISP
+  type: tuic
+  server: $HOST_IP
+  port: $PORT                                                          
+  uuid: $UUID
+  password: $PASSWORD
+  alpn: [h3]
+  disable-sni: true
+  reduce-rtt: true
+  udp-relay-mode: native
+  congestion-controller: bbr
+  sni: www.bing.com                                
+  skip-cert-verify: true
+EOF
 rm -rf config.json fake_useragent_0.2.0.json
+echo -e "\n\e[1;32mRuning done!\033[0m"
 
 exit 0
