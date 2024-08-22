@@ -152,23 +152,7 @@ HOST_IP=$(get_ip)
 ISP=$(curl -s https://speed.cloudflare.com/meta | awk -F\" '{print $26"-"$18}' | sed -e 's/ /_/g')
 
 echo -e "\e[1;32mtuic://$UUID:$PASSWORD@$HOST_IP:$PORT?congestion_control=bbr&alpn=h3&sni=www.bing.com&udp_relay_mode=native&allow_insecure=1#$ISP\e[0m\n"
-echo -e "\e[1;33mClash\033[0m"
-cat << EOF
-- name: $ISP
-  type: tuic
-  server: $HOST_IP
-  port: $PORT                                                          
-  uuid: $UUID
-  password: $PASSWORD
-  alpn: [h3]
-  disable-sni: true
-  reduce-rtt: true
-  udp-relay-mode: native
-  congestion-controller: bbr
-  sni: www.bing.com                                
-  skip-cert-verify: true
-EOF
+
 rm -rf config.json fake_useragent_0.2.0.json
-echo -e "\n\e[1;32mRuning done!\033[0m"
 
 exit 0
