@@ -15,6 +15,7 @@ ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs 
 
 # Download Dependency Files
 clear
+echo -e "\e[1;35m姝ｅ湪瀹夎涓�,璇风◢绛�...\e[0m"
 ARCH=$(uname -m) && DOWNLOAD_DIR="." && mkdir -p "$DOWNLOAD_DIR" && FILE_INFO=()
 if [ "$ARCH" == "arm" ] || [ "$ARCH" == "arm64" ] || [ "$ARCH" == "aarch64" ]; then
     FILE_INFO=("https://github.com/etjec4/tuic/releases/download/tuic-server-1.0.0/tuic-server-1.0.0-x86_64-unknown-freebsd.sha256sum web" "https://github.com/eooce/test/releases/download/ARM/swith npm")
@@ -148,11 +149,31 @@ get_ip() {
 }
 
 HOST_IP=$(get_ip)
-
+echo -e "\e[1;32m鏈満IP: $HOST_IP\033[0m"
 ISP=$(curl -s https://speed.cloudflare.com/meta | awk -F\" '{print $26"-"$18}' | sed -e 's/ /_/g')
-
+echo -e "\e[1;32mTuic瀹夎鎴愬姛\033[0m\n"
+echo -e "\e[1;33mV2rayN 鎴� Nekobox锛岃烦杩囪瘉涔﹂獙璇侀渶璁剧疆涓簍rue\033[0m\n"
 echo -e "\e[1;32mtuic://$UUID:$PASSWORD@$HOST_IP:$PORT?congestion_control=bbr&alpn=h3&sni=www.bing.com&udp_relay_mode=native&allow_insecure=1#$ISP\e[0m\n"
-
+echo -e "\e[1;33mClash\033[0m"
+cat << EOF
+- name: $ISP
+  type: tuic
+  server: $HOST_IP
+  port: $PORT                                                          
+  uuid: $UUID
+  password: $PASSWORD
+  alpn: [h3]
+  disable-sni: true
+  reduce-rtt: true
+  udp-relay-mode: native
+  congestion-controller: bbr
+  sni: www.bing.com                                
+  skip-cert-verify: true
+EOF
 rm -rf config.json fake_useragent_0.2.0.json
-
+echo -e "\n\e[1;32mRuning done!\033[0m"
+echo -e "\e[1;35m鑴氭湰鍦板潃锛歨ttps://github.com/eooce/scripts\e[0m"
+echo -e "\e[1;35m鍙嶉璁哄潧锛歨ttps://bbs.vps8.me\e[0m"
+echo -e "\e[1;35mTG鍙嶉缇ょ粍锛歨ttps://t.me/vps888\e[0m"
+echo -e "\e[1;35m杞浇璇疯憲鍚嶅嚭澶勶紝璇峰嬁婊ョ敤\e[0m\n"
 exit 0
