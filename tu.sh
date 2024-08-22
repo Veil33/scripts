@@ -1,6 +1,6 @@
 #!/bin/bash
 #export UUID=${UUID:-'fc44fe6a-f083-4591-9c03-f8d61dc3907f'}   # 若需要固定UUID，删除改行开头的#，删除第二行
-export UUID=$(openssl rand -hex 16 | awk '{print substr($0,1,8)"-"substr($0,9,4)"-"substr($0,13,4)"-"substr($0,17,4)"-"substr($0,21,12)}')
+export UUID=${UUID:-$(openssl rand -hex 16 | awk '{print substr($0,1,8)"-"substr($0,9,4)"-"substr($0,13,4)"-"substr($0,17,4)"-"substr($0,21,12)}')}
 export PASSWORD=${PASSWORD:-$(openssl rand -base64 16)}  # 随机生成password，无需更改
 export PORT="${PORT:-${PORT:-1234}}"                   # TUIC 端口必填，改为开放的udp端口
 export NEZHA_SERVER=${NEZHA_SERVER:-''}                # 哪吒客户端域名
