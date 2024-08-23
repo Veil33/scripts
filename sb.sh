@@ -102,6 +102,7 @@ generate_config() {
     "disable_cache": false,
     "disable_expire": false
   },
+    "inbounds": [
     {
       "tag": "vmess-ws-in",
       "type": "vmess",
@@ -116,16 +117,6 @@ generate_config() {
       "type": "ws",
       "path": "/vmess",
       "early_data_header_name": "Sec-WebSocket-Protocol"
-      }
-    },
-      "congestion_control": "bbr",
-      "tls": {
-        "enabled": true,
-        "alpn": [
-          "h3"
-        ],
-        "certificate_path": "cert.pem",
-        "key_path": "private.key"
       }
     }
 
