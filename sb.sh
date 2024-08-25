@@ -22,7 +22,7 @@ export ARGO_AUTH=${ARGO_AUTH:-''}
 export VMESS_PORT=${VMESS_PORT:-'40000'}
 #export TUIC_PORT=${TUIC_PORT:-'50000'}
 #export HY2_PORT=${HY2_PORT:-'60000'}
-export CFIP=${CFIP:-'www.visa.com.sg'} 
+export CFIP=${CFIP:-'www.4chan.org'} 
 export CFPORT=${CFPORT:-'443'} 
 
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="domains/${USERNAME}.ct8.pl/logs" || WORKDIR="domains/${USERNAME}.serv00.net/logs"
