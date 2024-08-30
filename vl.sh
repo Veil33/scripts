@@ -98,80 +98,72 @@ generate_config() {
   
   cat > config.json << EOF
 {
-    "log":{
-        "access":"/dev/null",
-        "error":"/dev/null",
-        "loglevel":"none"
-    },
-    "inbounds":[
-        {
-          "tag":"vmess-ws",
-          "port": ${PORT},
-          "listen": "0.0.0.0",
-          "protocol": "vmess",
-            "settings": {
-                "clients": [
-                    {
-                        "id": "${UUID}"
-                    }
-                ]
-            },
-            "streamSettings": {
-                "network": "ws",
-                "wsSettings": {
-                    "path": "/vmess"
-                }
-            }
+  "log": {
+    "access": "/dev/null",
+    "error": "/dev/null",
+    "loglevel": "warning"
+  },
+  "inbounds": [
+    {
+      "port": $ARGO_PORT,
+      "listen": "0.0.0.0",
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "${UUID}"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/vless"
         }
-    ],
-    "dns":{
-        "servers":[
-            "https+local://8.8.8.8/dns-query"
-        ]
-    },
-    "outbounds":[
-        {
-            "protocol":"freedom"
-        },
-        {
-            "tag":"WARP",
-            "protocol":"wireguard",
-            "settings":{
-                "secretKey":"YFYOAdbw1bKTHlNNi+aEjBM3BO7unuFC5rOkMRAz9XY=",
-                "address":[
-                    "172.16.0.2/32",
-                    "2606:4700:110:8a36:df92:102a:9602:fa18/128"
-                ],
-                "peers":[
-                    {
-                        "publicKey":"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
-                        "allowedIPs":[
-                            "0.0.0.0/0",
-                            "::/0"
-                        ],
-                        "endpoint":"162.159.193.10:2408"
-                    }
-                ],
-                "reserved":[78, 135, 76],
-                "mtu":1280
-            }
-        }
-    ],
-    "routing":{
-        "domainStrategy":"AsIs",
-        "rules":[
-            {
-                "type":"field",
-                "domain":[
-                    "domain:openai.com",
-                    "domain:chatgpt.com",
-                    "domain:auth.openai.com",
-                    "domain:chat.openai.com"
-                ],
-                "outboundTag":"WARP"
-            }
-        ]
+      }
     }
+  ],
+  "dns": {
+    "servers": [
+      "https+local://8.8.8.8/dns-query"
+    ]
+  },
+  "outbounds": [
+    {
+      "protocol": "freedom"
+    },
+    {
+      "tag": "WARP",
+      "protocol": "wireguard",
+      "settings": {
+        "secretKey": "cKE7LmCF61IhqqABGhvJ44jWXp8fKymcMAEVAzbDF2k=",
+        "address": [
+          "172.16.0.2/32",
+          "fd01:5ca1:ab1e:823e:e094:eb1c:ff87:1fab/128"
+        ],
+        "peers": [
+          {
+            "publicKey": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+            "endpoint": "162.159.193.10:2408"
+          }
+        ]
+      }
+    }
+  ],
+  "routing": {
+    "domainStrategy": "AsIs",
+    "rules": [
+      {
+        "type": "field",
+        "domain": [
+          "domain:openai.com",
+          "domain:ai.com"
+        ],
+        "outboundTag": "WARP"
+      }
+    ]
+  }
 }
 EOF
 }
