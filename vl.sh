@@ -158,7 +158,9 @@ generate_config() {
         "type": "field",
         "domain": [
           "domain:openai.com",
-          "domain:ai.com"
+          "domain:ai.com",
+          "domain:auth.openai.com",
+          "domain:chat.openai.com"
         ],
         "outboundTag": "WARP"
       }
