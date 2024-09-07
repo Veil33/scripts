@@ -127,7 +127,7 @@ run
 get_ip() {
   ip=$(curl -s --max-time 2 ipv4.ip.sb)
   if [ -z "$ip" ]; then
-    ip=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "cache${BASH_REMATCH[1]}.serv00.com" || echo "$HOSTNAME" )
+    ip=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "mail${BASH_REMATCH[1]}.serv00.com" || echo "$HOSTNAME" )
   else
     url="https://www.toolsdaquan.com/toolapi/public/ipchecking/$ip/443"
     response=$(curl -s --location --max-time 3 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
@@ -137,7 +137,7 @@ get_ip() {
         accessible=true
     fi
     if [ "$accessible" = false ]; then
-        ip=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "cache${BASH_REMATCH[1]}.serv00.com" || echo "$ip" )
+        ip=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "mail${BASH_REMATCH[1]}.serv00.com" || echo "$ip" )
     fi
   fi
   echo "$ip"
