@@ -11,11 +11,10 @@ HOSTNAME=$(hostname)
 
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="domains/${USERNAME}.ct8.pl/logs" || WORKDIR="domains/${USERNAME}.serv00.net/logs"
 [ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR" && cd "$WORKDIR")
-ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 2>/dev/null
+ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
 
 # Download Dependency Files
 clear
-
 ARCH=$(uname -m) && DOWNLOAD_DIR="." && mkdir -p "$DOWNLOAD_DIR" && FILE_INFO=()
 if [ "$ARCH" == "arm" ] || [ "$ARCH" == "arm64" ] || [ "$ARCH" == "aarch64" ]; then
     FILE_INFO=("https://github.com/etjec4/tuic/releases/download/tuic-server-1.0.0/tuic-server-1.0.0-x86_64-unknown-freebsd.sha256sum web" "https://github.com/eooce/test/releases/download/ARM/swith npm")
@@ -53,7 +52,7 @@ download_with_fallback() {
         wget -q -O "$NEW_FILENAME" "$URL"
         echo -e "\e[1;32mDownloading $NEW_FILENAME by wget\e[0m"
     else
-        wait $CURL_PID
+        wait $CURL_PID 2>/dev/null
         echo -e "\e[1;32mDownloading $NEW_FILENAME by curl\e[0m"
     fi
 }
@@ -63,11 +62,7 @@ for entry in "${FILE_INFO[@]}"; do
     RANDOM_NAME=$(generate_random_name)
     NEW_FILENAME="$DOWNLOAD_DIR/$RANDOM_NAME"
     
-    if [ -e "$NEW_FILENAME" ]; then
-        echo -e "\e[1;32m$NEW_FILENAME already exists, Skipping download\e[0m"
-    else
-        download_with_fallback "$URL" "$NEW_FILENAME"
-    fi
+    download_with_fallback "$URL" "$NEW_FILENAME"
     
     chmod +x "$NEW_FILENAME"
     FILE_MAP[$(echo "$entry" | cut -d ' ' -f 2)]="$NEW_FILENAME"
@@ -132,29 +127,30 @@ run
 get_ip() {
   ip=$(curl -s --max-time 2 ipv4.ip.sb)
   if [ -z "$ip" ]; then
-    ip=$( [[ "$HOSTNAME" =~ s[0-9]\.serv00\.com ]] && echo "${HOSTNAME/s/web}" || echo "$HOSTNAME" )
+    ip=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "cache${BASH_REMATCH[1]}.serv00.com" || echo "$HOSTNAME" )
   else
     url="https://www.toolsdaquan.com/toolapi/public/ipchecking/$ip/443"
-    response=$(curl -s --location --max-time 3.5 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
+    response=$(curl -s --location --max-time 3 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
     if [ -z "$response" ] || ! echo "$response" | grep -q '"icmp":"success"'; then
         accessible=false
     else
         accessible=true
     fi
     if [ "$accessible" = false ]; then
-        ip=$( [[ "$HOSTNAME" =~ s[0-9]\.serv00\.com ]] && echo "${HOSTNAME/s/web}" || echo "$ip" )
+        ip=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "cache${BASH_REMATCH[1]}.serv00.com" || echo "$ip" )
     fi
   fi
   echo "$ip"
 }
 
 HOST_IP=$(get_ip)
-echo -e "\e[1;32mIP: $HOST_IP\033[0m"
-ISP=$(curl -s https://speed.cloudflare.com/meta | awk -F\" '{print $26"-"$18}' | sed -e 's/ /_/g')
-echo -e "\e[1;32mtuic://$UUID:$PASSWORD@$HOST_IP:$PORT?congestion_control=bbr&alpn=h3&sni=www.bing.com&udp_relay_mode=native&allow_insecure=1#$ISP\e[0m\n"
+echo -e "\e[1;32m鏈満IP: $HOST_IP\033[0m"
+SERVER=$(hostname | cut -d '.' -f 1)
+ISP=$(curl -s --max-time 2 https://speed.cloudflare.com/meta | awk -F\" '{print $26}' | sed -e 's/ /_/g' || echo "0")
+echo -e "\e[1;32mtuic://$UUID:$PASSWORD@$HOST_IP:$PORT?congestion_control=bbr&alpn=h3&sni=www.bing.com&udp_relay_mode=native&allow_insecure=1#$ISP-$SERVER-tuic\e[0m\n"
 echo -e "\e[1;33mClash\033[0m"
 cat << EOF
-- name: $ISP
+- name: $ISP-$SERVER-tuic
   type: tuic
   server: $HOST_IP
   port: $PORT                                                          
@@ -169,5 +165,4 @@ cat << EOF
   skip-cert-verify: true
 EOF
 rm -rf config.json fake_useragent_0.2.0.json
-echo -e "\n\e[1;32mRuning done!\033[0m"
 exit 0
