@@ -20,7 +20,7 @@ export NEZHA_KEY=${NEZHA_KEY:-''}           # 哪吒密钥，端口为{443,8443,
 export ARGO_DOMAIN=${ARGO_DOMAIN:-''}      # ARGO 固定隧道域名，留空将使用临时隧道
 export ARGO_AUTH=${ARGO_AUTH:-''}         # ARGO 固定隧道json或token，留空将使用临时隧道
 export CFIP=${CFIP:-'www.shopify.com'}   # 优选ip或优选域名
-export CFPORT=${CFPORT:-'443'}          # 优选ip或优选域名对应端口  
+export CFPORT=${CFPORT:-'2083'}          # 优选ip或优选域名对应端口  
 export PORT=${VMESS_PORT:-'20000'}           # ARGO端口必填
 
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="domains/${USERNAME}.ct8.pl/logs" || WORKDIR="domains/${USERNAME}.serv00.net/logs" && rm -rf $WORKDIR
