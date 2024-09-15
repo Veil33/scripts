@@ -19,7 +19,7 @@ export NEZHA_PORT=${NEZHA_PORT:-'5555'}     # 哪吒面板通信端口
 export NEZHA_KEY=${NEZHA_KEY:-''}           # 哪吒密钥，端口为{443,8443,2096,2087,2083,2053}其中之一时自动开启tls
 export ARGO_DOMAIN=${ARGO_DOMAIN:-''}      # ARGO 固定隧道域名，留空将使用临时隧道
 export ARGO_AUTH=${ARGO_AUTH:-''}         # ARGO 固定隧道json或token，留空将使用临时隧道
-export CFIP=${CFIP:-'ct.090227.xyz'}   # 优选ip或优选域名
+export CFIP=${CFIP:-'cf.090227.xyz'}   # 优选ip或优选域名
 export CFPORT=${CFPORT:-'2052'}          # 优选ip或优选域名对应端口  
 export PORT=${VMESS_PORT:-'20000'}           # ARGO端口必填
 
