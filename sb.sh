@@ -229,9 +229,10 @@ generate_links() {
   echo -e "\e[1;32mArgoDomain:\e[1;35m${argodomain}\e[0m\n"
   sleep 1
   isp=$(curl -s --max-time 2 https://speed.cloudflare.com/meta | awk -F\" '{print $26"-"$18}' | sed -e 's/ /_/g')
+  SERVER=$(hostname | cut -d '.' -f 1)
   sleep 1
   cat > ${WORKDIR}/list.txt <<EOF
-vmess://$(echo "{ \"v\": \"2\", \"ps\": \"${ISP}-${SERVER}-vmess\", \"add\": \"${CFIP}\", \"port\": \"${CFPORT}\", \"id\": \"${UUID}\", \"aid\": \"0\", \"scy\": \"auto\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"${argodomain}\", \"path\": \"vmess?ed=2048\", \"tls\": \"tls\", \"sni\": \"${argodomain}\", \"alpn\": \"\" }" | base64 -w0)
+vmess://$(echo "{ \"v\": \"2\", \"ps\": \"${isp}-${SERVER}-vmess\", \"add\": \"${CFIP}\", \"port\": \"${CFPORT}\", \"id\": \"${UUID}\", \"aid\": \"0\", \"scy\": \"auto\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"${argodomain}\", \"path\": \"vmess?ed=2048\", \"tls\": \"tls\", \"sni\": \"${argodomain}\", \"alpn\": \"\" }" | base64 -w0)
 EOF
 
   cat ${WORKDIR}/list.txt
