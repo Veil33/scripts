@@ -232,7 +232,7 @@ generate_links() {
   SERVER=$(hostname | cut -d '.' -f 1)
   sleep 1
   cat > ${WORKDIR}/list.txt <<EOF
-vmess://$(echo "{ \"v\": \"2\", \"ps\": \"${isp}-${SERVER}-vmess\", \"add\": \"${CFIP}\", \"port\": \"${CFPORT}\", \"id\": \"${UUID}\", \"aid\": \"0\", \"scy\": \"auto\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"${argodomain}\", \"path\": \"vmess?ed=2048\", \"tls\": \"tls\", \"sni\": \"${argodomain}\", \"alpn\": \"\" }" | base64 -w0)
+vmess://$(echo "{ \"v\": \"2\", \"ps\": \"${isp}-${SERVER}-vmess\", \"add\": \"${CFIP}\", \"port\": \"${CFPORT}\", \"id\": \"${UUID}\", \"aid\": \"0\", \"scy\": \"auto\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"${argodomain}\", \"path\": \"vmess?ed=2048\", \"tls\": \"\", \"sni\": \"${argodomain}\", \"alpn\": \"\" }" | base64 -w0)
 EOF
 
   cat ${WORKDIR}/list.txt
